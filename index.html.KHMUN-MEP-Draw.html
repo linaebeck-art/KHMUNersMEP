@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KHMUN 2026 — MEP Draw</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy:   #0a1628;
+    --deep:   #0d2040;
+    --ash:    #4a7fa5;
+    --sky:    #7db8d4;
+    --fog:    #b8d4e3;
+    --white:  #f0f6fa;
+    --muted:  #6a9ab8;
+    --border: rgba(122,184,212,0.2);
+    --red:    #e87d6a;
+    --green:  #6abf8a;
+  }
+  html, body { min-height: 100%; }
+  body {
+    background: var(--navy); color: var(--white);
+    font-family: 'Jost', sans-serif; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 3rem 1.5rem 4rem; position: relative; overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(74,127,165,0.25) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(13,32,64,0.9) 0%, transparent 70%),
+      linear-gradient(180deg, #060e1a 0%, #0a1628 40%, #0d2040 100%);
+    z-index: 0; pointer-events: none;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(74,127,165,0.04) 60px, rgba(74,127,165,0.04) 61px);
+    z-index: 0; pointer-events: none;
+  }
+  * { position: relative; z-index: 1; }
+  @keyframes riseIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+  .header { text-align: center; margin-bottom: 3rem; animation: riseIn 0.8s ease forwards; }
+  .eyebrow { font-size: 0.65rem; letter-spacing: 0.45em; text-transform: uppercase; color: var(--sky); margin-bottom: 1rem; }
+  .title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.6rem, 5vw, 2.8rem); font-weight: 600; color: var(--white); }
+  .title em { font-style: italic; color: var(--sky); }
+  .rule { width: 48px; height: 1px; background: linear-gradient(90deg, transparent, var(--ash), transparent); margin: 1.2rem auto 0; }
+
+  .card {
+    background: rgba(13,32,64,0.7); border: 1px solid var(--border);
+    backdrop-filter: blur(12px); width: 100%; max-width: 500px; padding: 2.5rem;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5); animation: riseIn 0.9s ease 0.1s both;
+  }
+  .field-label { font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; display: block; }
+  .input-hint { font-size: 0.62rem; color: var(--muted); margin-bottom: 0.75rem; letter-spacing: 0.05em; }
+  input[type="text"], input[type="password"] {
+    width: 100%; background: rgba(10,22,40,0.6); border: 1px solid var(--border);
+    border-bottom: 2px solid var(--ash); color: var(--white); font-family: 'Jost', sans-serif;
+    font-size: 1.05rem; padding: 0.7rem 0.8rem; outline: none; transition: border-color 0.2s;
+  }
+  input:focus { border-color: var(--sky); border-bottom-color: var(--sky); background: rgba(10,22,40,0.85); }
+  input::placeholder { color: rgba(107,154,184,0.4); }
+  .name-hint { margin-top: 0.4rem; font-size: 0.6rem; letter-spacing: 0.05em; min-height: 1rem; }
+  .btn {
+    width: 100%; margin-top: 1.75rem; padding: 0.9rem;
+    background: linear-gradient(135deg, var(--ash), var(--sky));
+    color: var(--navy); font-family: 'Jost', sans-serif; font-size: 0.72rem;
+    font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase;
+    border: none; cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+  }
+  .btn:hover { opacity: 0.88; }
+  .btn:active { transform: scale(0.99); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .error-msg { margin-top: 0.75rem; font-size: 0.68rem; color: var(--red); display: none; line-height: 1.5; }
+
+  /* Result */
+  .result-wrap { display: none; text-align: center; animation: riseIn 0.5s ease forwards; }
+  .result-greeting { font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem; }
+  .result-name { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; color: var(--white); margin-bottom: 2rem; word-break: break-word; }
+  .assignment-box { border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; position: relative; background: rgba(10,22,40,0.4); }
+  .assignment-box::before {
+    content: 'MEP ASSIGNED'; position: absolute; top: -0.5rem; left: 50%; transform: translateX(-50%);
+    background: var(--deep); border: 1px solid var(--border); font-size: 0.5rem;
+    letter-spacing: 0.35em; color: var(--sky); padding: 0 0.6rem; white-space: nowrap;
+  }
+  .politician-photo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--ash); margin: 0 auto 0.8rem; display: block; }
+  .politician-photo-placeholder { width: 100px; height: 100px; border-radius: 50%; background: rgba(74,127,165,0.15); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.8rem; font-size: 2rem; color: var(--muted); }
+  .res-politician-name { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 700; color: var(--sky); }
+  .res-politician-title { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-top: 0.3rem; }
+  .result-note { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.06em; line-height: 1.7; margin-bottom: 1.5rem; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--fog); font-family: 'Jost', sans-serif; font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; padding: 0.6rem 1.5rem; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+  .btn-ghost:hover { border-color: var(--sky); color: var(--sky); }
+
+  /* Admin */
+  .admin-toggle { margin-top: 2.5rem; font-size: 0.58rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; cursor: pointer; opacity: 0.5; transition: opacity 0.2s; text-align: center; }
+  .admin-toggle:hover { opacity: 1; }
+  .admin-panel { display: none; margin-top: 1.5rem; background: rgba(13,32,64,0.85); border: 1px solid var(--border); backdrop-filter: blur(12px); padding: 2rem; width: 100%; max-width: 500px; }
+  .admin-panel h3 { font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.2rem; }
+  #pwError { display: none; font-size: 0.65rem; color: var(--red); margin-top: 0.5rem; }
+  #adminContent { display: none; }
+
+  .pol-row { display: grid; grid-template-columns: 64px 1fr auto; gap: 0.75rem; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+  .pol-thumb-wrap { display: flex; flex-direction: column; align-items: center; }
+  .pol-thumb { width: 56px; height: 56px; border-radius: 50%; border: 1px solid var(--border); background: rgba(74,127,165,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: var(--muted); overflow: hidden; cursor: pointer; transition: border-color 0.2s; }
+  .pol-thumb:hover { border-color: var(--sky); }
+  .pol-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .pol-thumb-hint { font-size: 0.45rem; text-align: center; letter-spacing: 0.05em; color: var(--muted); margin-top: 0.2rem; }
+  .pol-fields { display: flex; flex-direction: column; gap: 0.35rem; }
+  .pol-fields input { font-size: 0.8rem; padding: 0.35rem 0.5rem; }
+  .count-badge { font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.5rem; border: 1px solid var(--ash); color: var(--sky); white-space: nowrap; }
+  .admin-actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; flex-wrap: wrap; }
+  .admin-btn { flex: 1; min-width: 110px; padding: 0.55rem; font-family: 'Jost', sans-serif; font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--fog); transition: all 0.15s; }
+  .admin-btn:hover { border-color: var(--sky); color: var(--sky); }
+  .admin-btn.danger { border-color: rgba(232,125,106,0.4); color: var(--red); }
+  .admin-btn.danger:hover { background: rgba(232,125,106,0.1); }
+  .log-section { margin-top: 1.5rem; }
+  .log-section h4 { font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.6rem; }
+  .log-total { font-size: 0.6rem; color: var(--sky); margin-bottom: 0.5rem; }
+  .log-list { list-style: none; max-height: 150px; overflow-y: auto; }
+  .log-list li { font-size: 0.68rem; padding: 0.3rem 0; border-bottom: 1px solid rgba(122,184,212,0.08); color: var(--muted); }
+  .log-list li strong { color: var(--fog); }
+  .log-list li .time { font-size: 0.55rem; opacity: 0.5; margin-left: 0.5rem; }
+  .file-input { display: none; }
+  .footer { margin-top: 3rem; font-size: 0.55rem; letter-spacing: 0.15em; color: var(--muted); text-align: center; opacity: 0.35; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(10,22,40,0.3); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <p class="eyebrow">KHMUNer's Elite 2026</p>
+  <h1 class="title"><em>MEP</em> Draw</h1>
+  <div class="rule"></div>
+</div>
+
+<div class="card">
+  <div id="formView">
+    <label class="field-label" for="delegateName">Your Name</label>
+    <p class="input-hint">Format: <strong style="color:var(--fog)">中文名English</strong> &nbsp;e.g. 王曉明Eric</p>
+    <input type="text" id="delegateName" placeholder="王曉明Eric" autocomplete="off" />
+    <p class="name-hint" id="nameHint"></p>
+    <p class="error-msg" id="errorMsg"></p>
+    <button class="btn" id="drawBtn" onclick="handleDraw()">✦ &nbsp; Draw My MEP</button>
+  </div>
+
+  <div class="result-wrap" id="resultView">
+    <p class="result-greeting">Congratulations,</p>
+    <p class="result-name" id="resName"></p>
+    <div class="assignment-box">
+      <div id="resPhotoWrap"></div>
+      <p class="res-politician-name" id="resPolitician"></p>
+      <p class="res-politician-title" id="resTitle"></p>
+    </div>
+    <p class="result-note">Your MEP assignment has been recorded.<br>May the best of luck be beside you.</p>
+    <button class="btn-ghost" onclick="resetForm()">← Another Delegate</button>
+  </div>
+</div>
+
+<p class="admin-toggle" onclick="toggleAdmin()">⚙ &nbsp; Admin Panel</p>
+
+<div class="admin-panel" id="adminPanel">
+  <div id="pwGate">
+    <h3>Admin Access</h3>
+    <label class="field-label" for="adminPw">Password</label>
+    <input type="password" id="adminPw" placeholder="Enter password" onkeydown="if(event.key==='Enter') checkAdminPw()" />
+    <p id="pwError">Incorrect password.</p>
+    <button class="btn" style="margin-top:1.25rem;" onclick="checkAdminPw()">Unlock →</button>
+  </div>
+
+  <div id="adminContent">
+    <h3>MEP Roster</h3>
+    <div id="politicianList"></div>
+    <div class="admin-actions">
+      <button class="admin-btn" onclick="saveNames(this)">Save Changes</button>
+      <button class="admin-btn danger" onclick="resetAll()">Reset All Draws</button>
+    </div>
+    <div class="log-section">
+      <h4>Assignment Log</h4>
+      <p class="log-total" id="logTotal"></p>
+      <ul class="log-list" id="logList"><li style="font-style:italic;opacity:0.5">Loading...</li></ul>
+    </div>
+  </div>
+</div>
+
+<p class="footer">KHMUN 2026 · Data stored in Google Sheets</p>
+
+<script>
+  // ── Config ───────────────────────────────────────────────────────────────
+  const API = 'https://script.google.com/macros/s/AKfycbxjuhASQLuj3J5RKrkbJJKHeScQfcTgSWOB5GFgAIBHMzQmUFIkySipL583npiOsrq4/exec';
+
+  let adminPassword = null;
+  let adminOpen = false;
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  function validateName(raw) {
+    const hasChinese = /[\u4e00-\u9fff\u3400-\u4dbf]/.test(raw);
+    const hasLatin   = /[a-zA-Z]/.test(raw);
+    return hasChinese && hasLatin;
+  }
+
+  // Google Apps Script requires JSONP for POST from static files
+  // We use no-cors fetch with GET params for simplicity
+  async function api(action, body, pw) {
+    let url = API + '?action=' + action;
+    if (pw) url += '&pw=' + encodeURIComponent(pw);
+
+    const opts = body
+      ? { method: 'POST', body: JSON.stringify(body) }
+      : { method: 'GET' };
+
+    const res = await fetch(url, opts);
+    return res.json();
+  }
+
+  // ── Name hint ────────────────────────────────────────────────────────────
+  document.getElementById('delegateName').addEventListener('input', function() {
+    const v = this.value.trim();
+    const hint = document.getElementById('nameHint');
+    if (!v) { hint.textContent = ''; return; }
+    if (validateName(v)) {
+      hint.style.color = '#6abf8a';
+      hint.textContent = '✓ Format looks good';
+    } else {
+      hint.style.color = '#e87d6a';
+      hint.textContent = 'Include both Chinese characters and English name';
+    }
+  });
+
+  document.getElementById('delegateName').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleDraw();
+  });
+
+  // ── Draw ─────────────────────────────────────────────────────────────────
+  async function handleDraw() {
+    const nameRaw = document.getElementById('delegateName').value.trim();
+    const errEl   = document.getElementById('errorMsg');
+    const btn     = document.getElementById('drawBtn');
+    errEl.style.display = 'none';
+
+    if (!nameRaw) { showError('Please enter your name.'); return; }
+    if (!validateName(nameRaw)) {
+      showError('Name must include Chinese characters and English name.\nFormat: 王曉明Eric');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Drawing...';
+
+    try {
+      const data = await api('draw', { name: nameRaw });
+      if (data.error) { showError(data.error); return; }
+      showResult(nameRaw, data.politician);
+    } catch (e) {
+      showError('Connection error. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '✦ &nbsp; Draw My MEP';
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg; el.style.display = 'block';
+  }
+
+  function showResult(name, pol) {
+    document.getElementById('formView').style.display = 'none';
+    document.getElementById('resultView').style.display = 'block';
+    document.getElementById('resName').textContent = name;
+    document.getElementById('resPolitician').textContent = pol.name;
+    document.getElementById('resTitle').textContent = pol.title;
+    const wrap = document.getElementById('resPhotoWrap');
+    if (pol.img) {
+      wrap.innerHTML = '<img class="politician-photo" src="' + pol.img + '" alt="" />';
+    } else {
+      wrap.innerHTML = '<div class="politician-photo-placeholder">🎖</div>';
+    }
+  }
+
+  function resetForm() {
+    document.getElementById('delegateName').value = '';
+    document.getElementById('errorMsg').style.display = 'none';
+    document.getElementById('nameHint').textContent = '';
+    document.getElementById('resultView').style.display = 'none';
+    document.getElementById('formView').style.display = 'block';
+  }
+
+  // ── Admin ─────────────────────────────────────────────────────────────────
+  function toggleAdmin() {
+    adminOpen = !adminOpen;
+    document.getElementById('adminPanel').style.display = adminOpen ? 'block' : 'none';
+  }
+
+  async function checkAdminPw() {
+    const pw = document.getElementById('adminPw').value;
+    document.getElementById('pwError').style.display = 'none';
+    try {
+      const data = await api('auth', { password: pw });
+      if (data.success) {
+        adminPassword = pw;
+        document.getElementById('pwGate').style.display = 'none';
+        document.getElementById('adminContent').style.display = 'block';
+        loadAdminData();
+      } else {
+        document.getElementById('pwError').style.display = 'block';
+        document.getElementById('adminPw').value = '';
+      }
+    } catch (e) {
+      document.getElementById('pwError').textContent = 'Connection error.';
+      document.getElementById('pwError').style.display = 'block';
+    }
+  }
+
+  async function loadAdminData() {
+    try {
+      const data = await api('adminData', null, adminPassword);
+      if (data.error) return;
+
+      const container = document.getElementById('politicianList');
+      container.innerHTML = '';
+      (data.politicians || []).forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'pol-row';
+
+        const thumbWrap = document.createElement('div');
+        thumbWrap.className = 'pol-thumb-wrap';
+        const thumb = document.createElement('div');
+        thumb.className = 'pol-thumb';
+        thumb.innerHTML = p.img ? '<img src="' + p.img + '" alt="" />' : '＋';
+        thumb.onclick = () => document.getElementById('fi_' + p.index).click();
+        const hint = document.createElement('p');
+        hint.className = 'pol-thumb-hint';
+        hint.textContent = 'Upload';
+        const fi = document.createElement('input');
+        fi.type = 'file'; fi.accept = 'image/*';
+        fi.id = 'fi_' + p.index; fi.className = 'file-input';
+        fi.onchange = (e) => uploadImage(e, p.index, thumb);
+        thumbWrap.appendChild(thumb);
+        thumbWrap.appendChild(hint);
+        thumbWrap.appendChild(fi);
+
+        const fields = document.createElement('div');
+        fields.className = 'pol-fields';
+        const ni = document.createElement('input');
+        ni.type = 'text'; ni.value = p.name; ni.placeholder = 'MEP Name';
+        ni.dataset.idx = p.index; ni.dataset.field = 'name';
+        const ti = document.createElement('input');
+        ti.type = 'text'; ti.value = p.title; ti.placeholder = 'Title / Role';
+        ti.dataset.idx = p.index; ti.dataset.field = 'title';
+        fields.appendChild(ni); fields.appendChild(ti);
+
+        const badge = document.createElement('span');
+        badge.className = 'count-badge';
+        badge.textContent = p.count + (p.count === 1 ? ' delegate' : ' delegates');
+
+        row.appendChild(thumbWrap);
+        row.appendChild(fields);
+        row.appendChild(badge);
+        container.appendChild(row);
+      });
+
+      document.getElementById('logTotal').textContent = 'Total draws: ' + data.total;
+      const logList = document.getElementById('logList');
+      if (!data.log || data.log.length === 0) {
+        logList.innerHTML = '<li style="font-style:italic;opacity:0.5">No assignments yet.</li>';
+      } else {
+        logList.innerHTML = data.log.map(e => {
+          const t = e.time ? new Date(e.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+          return '<li><strong>' + esc(e.delegate) + '</strong> → ' + esc(e.politician) + '<span class="time">' + t + '</span></li>';
+        }).join('');
+      }
+    } catch (err) { console.error(err); }
+  }
+
+  async function uploadImage(e, idx, thumbEl) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const img = ev.target.result;
+      // Store image in the sheet row for this MEP
+      try {
+        // Get current mep data first
+        const data = await api('adminData', null, adminPassword);
+        const meps = data.politicians.map(p => ({
+          index: p.index,
+          name: p.name,
+          title: p.title,
+          img: p.index === idx ? img : (p.img || '')
+        }));
+        await api('saveMeps', { meps }, adminPassword);
+        thumbEl.innerHTML = '<img src="' + img + '" alt="" />';
+      } catch (err) { alert('Upload failed. Try a smaller image.'); }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function saveNames(btn) {
+    try {
+      const data = await api('adminData', null, adminPassword);
+      const meps = data.politicians.map(p => ({
+        index: p.index,
+        name: p.name,
+        title: p.title,
+        img: p.img || ''
+      }));
+      // Override with whatever is in the input fields
+      document.querySelectorAll('#politicianList input[type="text"]').forEach(inp => {
+        const i = parseInt(inp.dataset.idx);
+        const field = inp.dataset.field;
+        const mep = meps.find(m => m.index === i);
+        if (mep && inp.value.trim()) mep[field] = inp.value.trim();
+      });
+      await api('saveMeps', { meps }, adminPassword);
+      btn.textContent = 'Saved ✓';
+      setTimeout(() => btn.textContent = 'Save Changes', 1600);
+    } catch (e) { alert('Save failed. Try again.'); }
+  }
+
+  async function resetAll() {
+    if (!confirm('Reset all draws? Delegates can draw again.')) return;
+    try {
+      await api('reset', {}, adminPassword);
+      resetForm();
+      loadAdminData();
+    } catch (e) { alert('Reset failed.'); }
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
